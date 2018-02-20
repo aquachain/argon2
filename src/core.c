@@ -134,11 +134,15 @@ void NOT_OPTIMIZED secure_wipe_memory(void *v, size_t n) {
 }
 
 /* Memory clear flag defaults to true. */
+#if !defined(ARGON2_NO_SECURE_WIPE)
 int FLAG_clear_internal_memory = 1;
+#endif
 void clear_internal_memory(void *v, size_t n) {
+#if !defined(ARGON2_NO_SECURE_WIPE)
   if (FLAG_clear_internal_memory && v) {
     secure_wipe_memory(v, n);
   }
+#endif
 }
 
 void finalize(const argon2_context *context, argon2_instance_t *instance) {
