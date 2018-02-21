@@ -107,41 +107,48 @@ static void fill_block(__m256i *state, const block *ref_block,
     }
 }
 #else
-static void fill_block(__m128i *state, const block *ref_block,
-                       block *next_block, int with_xor) {
-    __m128i block_XY[ARGON2_OWORDS_IN_BLOCK];
-    unsigned int i;
+// from a quick test:
+// BLOCK_XY_OPT=0 => up to 10.11 H/s
+// BLOCK_XY_OPT=1 => up to 10.16 H/s (+0.5%)
+#define BLOCK_XY_OPT (1) 
+#if BLOCK_XY_OPT
+__declspec(thread) __m128i block_XY[ARGON2_OWORDS_IN_BLOCK];
+#endif
 
-    if (with_xor) {
-        for (i = 0; i < ARGON2_OWORDS_IN_BLOCK; i++) {
-            state[i] = _mm_xor_si128(
-                state[i], _mm_loadu_si128((const __m128i *)ref_block->v + i));
-            block_XY[i] = _mm_xor_si128(
-                state[i], _mm_loadu_si128((const __m128i *)next_block->v + i));
-        }
-    } else {
-        for (i = 0; i < ARGON2_OWORDS_IN_BLOCK; i++) {
-            block_XY[i] = state[i] = _mm_xor_si128(
-                state[i], _mm_loadu_si128((const __m128i *)ref_block->v + i));
-        }
-    }
+void fill_block(__m128i *state, const block *ref_block,
+	block *next_block, int with_xor) {
+	unsigned int i;
 
-    for (i = 0; i < 8; ++i) {
-        BLAKE2_ROUND(state[8 * i + 0], state[8 * i + 1], state[8 * i + 2],
-            state[8 * i + 3], state[8 * i + 4], state[8 * i + 5],
-            state[8 * i + 6], state[8 * i + 7]);
-    }
+#if BLOCK_XY_OPT
+	for (i = 0; i < ARGON2_OWORDS_IN_BLOCK; i++) {
+		state[i] = _mm_xor_si128(
+			state[i], _mm_loadu_si128((const __m128i *)ref_block->v + i));
+	}
+	memcpy(block_XY, state, sizeof(block_XY));
+#else
+	__m128i block_XY[ARGON2_OWORDS_IN_BLOCK];
+	for (i = 0; i < ARGON2_OWORDS_IN_BLOCK; i++) {
+		block_XY[i] = state[i] = _mm_xor_si128(
+			state[i], _mm_loadu_si128((const __m128i *)ref_block->v + i));
+	}
+#endif
 
-    for (i = 0; i < 8; ++i) {
-        BLAKE2_ROUND(state[8 * 0 + i], state[8 * 1 + i], state[8 * 2 + i],
-            state[8 * 3 + i], state[8 * 4 + i], state[8 * 5 + i],
-            state[8 * 6 + i], state[8 * 7 + i]);
-    }
+	for (i = 0; i < 8; ++i) {
+		BLAKE2_ROUND(state[8 * i + 0], state[8 * i + 1], state[8 * i + 2],
+			state[8 * i + 3], state[8 * i + 4], state[8 * i + 5],
+			state[8 * i + 6], state[8 * i + 7]);
+	}
 
-    for (i = 0; i < ARGON2_OWORDS_IN_BLOCK; i++) {
-        state[i] = _mm_xor_si128(state[i], block_XY[i]);
-        _mm_storeu_si128((__m128i *)next_block->v + i, state[i]);
-    }
+	for (i = 0; i < 8; ++i) {
+		BLAKE2_ROUND(state[8 * 0 + i], state[8 * 1 + i], state[8 * 2 + i],
+			state[8 * 3 + i], state[8 * 4 + i], state[8 * 5 + i],
+			state[8 * 6 + i], state[8 * 7 + i]);
+	}
+
+	for (i = 0; i < ARGON2_OWORDS_IN_BLOCK; i++) {
+		state[i] = _mm_xor_si128(state[i], block_XY[i]);
+		_mm_storeu_si128((__m128i *)next_block->v + i, state[i]);
+	}
 }
 #endif
 
@@ -185,27 +192,18 @@ void fill_segment(const argon2_instance_t *instance,
 #else
     __m128i state[ARGON2_OWORDS_IN_BLOCK];
 #endif
-    int data_independent_addressing;
-
     if (instance == NULL) {
         return;
     }
 
-    data_independent_addressing =
-        (instance->type == Argon2_i) ||
-        (instance->type == Argon2_id && (position.pass == 0) &&
-         (position.slice < ARGON2_SYNC_POINTS / 2));
+    init_block_value(&input_block, 0);
 
-    if (data_independent_addressing) {
-        init_block_value(&input_block, 0);
-
-        input_block.v[0] = position.pass;
-        input_block.v[1] = position.lane;
-        input_block.v[2] = position.slice;
-        input_block.v[3] = instance->memory_blocks;
-        input_block.v[4] = instance->passes;
-        input_block.v[5] = instance->type;
-    }
+    input_block.v[0] = position.pass;
+    input_block.v[1] = position.lane;
+    input_block.v[2] = position.slice;
+    input_block.v[3] = instance->memory_blocks;
+    input_block.v[4] = instance->passes;
+    input_block.v[5] = instance->type;
 
     starting_index = 0;
 
@@ -213,9 +211,7 @@ void fill_segment(const argon2_instance_t *instance,
         starting_index = 2; /* we have already generated the first two blocks */
 
         /* Don't forget to generate the first block of addresses: */
-        if (data_independent_addressing) {
-            next_addresses(&address_block, &input_block);
-        }
+        next_addresses(&address_block, &input_block);
     }
 
     /* Offset of the current block */
@@ -241,14 +237,10 @@ void fill_segment(const argon2_instance_t *instance,
 
         /* 1.2 Computing the index of the reference block */
         /* 1.2.1 Taking pseudo-random value from the previous block */
-        if (data_independent_addressing) {
-            if (i % ARGON2_ADDRESSES_IN_BLOCK == 0) {
-                next_addresses(&address_block, &input_block);
-            }
-            pseudo_rand = address_block.v[i % ARGON2_ADDRESSES_IN_BLOCK];
-        } else {
-            pseudo_rand = instance->memory[prev_offset].v[0];
+        if (i % ARGON2_ADDRESSES_IN_BLOCK == 0) {
+            next_addresses(&address_block, &input_block);
         }
+        pseudo_rand = address_block.v[i % ARGON2_ADDRESSES_IN_BLOCK];
 
         /* 1.2.2 Computing the lane of the reference block */
         ref_lane = ((pseudo_rand >> 32)) % instance->lanes;
@@ -269,15 +261,6 @@ void fill_segment(const argon2_instance_t *instance,
         ref_block =
             instance->memory + instance->lane_length * ref_lane + ref_index;
         curr_block = instance->memory + curr_offset;
-        if (ARGON2_VERSION_10 == instance->version) {
-            /* version 1.2.1 and earlier: overwrite, not XOR */
-            fill_block(state, ref_block, curr_block, 0);
-        } else {
-            if(0 == position.pass) {
-                fill_block(state, ref_block, curr_block, 0);
-            } else {
-                fill_block(state, ref_block, curr_block, 1);
-            }
-        }
+		fill_block(state, ref_block, curr_block, 0);
     }
 }
