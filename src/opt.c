@@ -110,7 +110,12 @@ static void fill_block(__m256i *state, const block *ref_block,
 // from a quick test:
 // BLOCK_XY_OPT=0 => up to 10.11 H/s
 // BLOCK_XY_OPT=1 => up to 10.16 H/s (+0.5%)
+#ifdef _WIN32
 #define BLOCK_XY_OPT (1) 
+#else
+#define BLOCK_XY_OPT (0) 
+#endif
+
 #if BLOCK_XY_OPT
 __declspec(thread) __m128i block_XY[ARGON2_OWORDS_IN_BLOCK];
 #endif
