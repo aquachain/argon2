@@ -430,6 +430,11 @@ ARGON2_PUBLIC size_t argon2_encodedlen(uint32_t t_cost, uint32_t m_cost,
                                        uint32_t parallelism, uint32_t saltlen,
                                        uint32_t hashlen, argon2_type type);
 
+// export some internal encoding functions for ario miner
+size_t to_base64(char *dst, size_t dst_len, const void *src, size_t src_len);
+const char *from_base64(void *dst, size_t *dst_len, const char *src);
+int encode_string(char *dst, size_t dst_len, argon2_context *ctx, argon2_type type);
+
 #if defined(__cplusplus)
 }
 #endif
