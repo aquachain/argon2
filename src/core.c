@@ -408,15 +408,11 @@ int validate_inputs(const argon2_context *context) {
         return ARGON2_PWD_TOO_LONG;
     }
 
-    /* Validate salt (required param) */
+    /* Validate salt */
     if (NULL == context->salt) {
         if (0 != context->saltlen) {
             return ARGON2_SALT_PTR_MISMATCH;
         }
-    }
-
-    if (ARGON2_MIN_SALT_LENGTH > context->saltlen) {
-        return ARGON2_SALT_TOO_SHORT;
     }
 
     if (ARGON2_MAX_SALT_LENGTH < context->saltlen) {
@@ -452,16 +448,8 @@ int validate_inputs(const argon2_context *context) {
     }
 
     /* Validate memory cost */
-    if (ARGON2_MIN_MEMORY > context->m_cost) {
-        return ARGON2_MEMORY_TOO_LITTLE;
-    }
-
     if (ARGON2_MAX_MEMORY < context->m_cost) {
         return ARGON2_MEMORY_TOO_MUCH;
-    }
-
-    if (context->m_cost < 8 * context->lanes) {
-        return ARGON2_MEMORY_TOO_LITTLE;
     }
 
     /* Validate time cost */
