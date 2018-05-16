@@ -536,28 +536,36 @@ void initial_hash(uint8_t *blockhash, argon2_context *context,
 
     blake2b_init(&BlakeHash, ARGON2_PREHASH_DIGEST_LENGTH);
 
+	// binary.LittleEndian.PutUint32(params[0:4], threads)
     store32(&value, context->lanes);
     blake2b_update(&BlakeHash, (const uint8_t *)&value, sizeof(value));
 
+	// binary.LittleEndian.PutUint32(params[4:8], keyLen)
     store32(&value, context->outlen);
     blake2b_update(&BlakeHash, (const uint8_t *)&value, sizeof(value));
 
+	// binary.LittleEndian.PutUint32(params[8:12], memory)
     store32(&value, context->m_cost);
     blake2b_update(&BlakeHash, (const uint8_t *)&value, sizeof(value));
 
+	// binary.LittleEndian.PutUint32(params[12:16], time)
     store32(&value, context->t_cost);
     blake2b_update(&BlakeHash, (const uint8_t *)&value, sizeof(value));
 
+	//binary.LittleEndian.PutUint32(params[16:20], uint32(Version))
     store32(&value, context->version);
     blake2b_update(&BlakeHash, (const uint8_t *)&value, sizeof(value));
 
+	//binary.LittleEndian.PutUint32(params[20:24], uint32(mode))
     store32(&value, (uint32_t)type);
     blake2b_update(&BlakeHash, (const uint8_t *)&value, sizeof(value));
 
+	// binary.LittleEndian.PutUint32(tmp[:], uint32(len(password)))
     store32(&value, context->pwdlen);
     blake2b_update(&BlakeHash, (const uint8_t *)&value, sizeof(value));
 
     if (context->pwd != NULL) {
+		// b2.Write(password)
         blake2b_update(&BlakeHash, (const uint8_t *)context->pwd,
                        context->pwdlen);
 
@@ -567,18 +575,22 @@ void initial_hash(uint8_t *blockhash, argon2_context *context,
         }
     }
 
+	//binary.LittleEndian.PutUint32(tmp[:], uint32(len(salt)))
     store32(&value, context->saltlen);
     blake2b_update(&BlakeHash, (const uint8_t *)&value, sizeof(value));
 
     if (context->salt != NULL) {
+		// b2.Write(salt)
         blake2b_update(&BlakeHash, (const uint8_t *)context->salt,
                        context->saltlen);
     }
 
+	// binary.LittleEndian.PutUint32(tmp[:], uint32(len(key)))
     store32(&value, context->secretlen);
     blake2b_update(&BlakeHash, (const uint8_t *)&value, sizeof(value));
 
     if (context->secret != NULL) {
+		// b2.Write(key)
         blake2b_update(&BlakeHash, (const uint8_t *)context->secret,
                        context->secretlen);
 
@@ -588,14 +600,17 @@ void initial_hash(uint8_t *blockhash, argon2_context *context,
         }
     }
 
+	//binary.LittleEndian.PutUint32(tmp[:], uint32(len(data)))
     store32(&value, context->adlen);
     blake2b_update(&BlakeHash, (const uint8_t *)&value, sizeof(value));
 
+	// b2.Write(data)
     if (context->ad != NULL) {
         blake2b_update(&BlakeHash, (const uint8_t *)context->ad,
                        context->adlen);
     }
 
+	// b2.Sum(h0[:0])
     blake2b_final(&BlakeHash, blockhash, ARGON2_PREHASH_DIGEST_LENGTH);
 }
 
