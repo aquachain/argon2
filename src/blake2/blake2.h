@@ -53,8 +53,8 @@ typedef struct __blake2b_state {
     uint64_t t[2];
     uint64_t f[2];
     uint8_t buf[BLAKE2B_BLOCKBYTES];
-    unsigned buflen;
-    unsigned outlen;
+    size_t buflen;
+	size_t outlen;
     uint8_t last_node;
 } blake2b_state;
 
