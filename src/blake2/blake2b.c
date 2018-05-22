@@ -89,6 +89,36 @@ int blake2b_init_param(blake2b_state *S, const blake2b_param *P) {
 
 /* Sequential blake2b initialization */
 int blake2b_init(blake2b_state *S, size_t outlen) {
+
+#if OPT_AQUA_BLAKE2B_INIT
+	// 32 or 64
+	static blake2b_state S32;
+	static blake2b_state S64;
+	static int s_inited = 0;
+	if (!s_inited) {
+		blake2b_param P32, P64;
+		memset(&P32, 0, sizeof(P32));
+		memset(&P64, 0, sizeof(P64));
+		P32.digest_length = 32;
+		P64.digest_length = 64;
+		P32.fanout = P64.fanout = 1;
+		P32.depth = P64.depth = 1;
+		blake2b_init_param(&S32, &P32);
+		blake2b_init_param(&S64, &P64);
+		s_inited = 1;
+	}
+
+	if (outlen == 32) {
+		*S = S32;
+	}
+	else if (outlen == 64) {
+		*S = S64;
+	}
+	else {
+		return -1;
+	}
+	return 0;
+#else
     blake2b_param P;
 
     if (S == NULL) {
@@ -114,6 +144,7 @@ int blake2b_init(blake2b_state *S, size_t outlen) {
     memset(P.personal, 0, sizeof(P.personal));
 
     return blake2b_init_param(S, &P);
+#endif
 }
 
 int blake2b_init_key(blake2b_state *S, size_t outlen, const void *key,
@@ -168,6 +199,10 @@ static void blake2b_compress(blake2b_state *S, const uint8_t *block) {
     uint64_t v[16];
     unsigned int i, r;
 
+#if OPT_AQUA_BLAKE2B_COMPRESS
+	memcpy(m, block, 16 * sizeof(uint64_t));
+	memcpy(v, S->h, 8 * sizeof(uint64_t));
+#else
     for (i = 0; i < 16; ++i) {
         m[i] = load64(block + i * sizeof(m[i]));
     }
@@ -175,6 +210,7 @@ static void blake2b_compress(blake2b_state *S, const uint8_t *block) {
     for (i = 0; i < 8; ++i) {
         v[i] = S->h[i];
     }
+#endif
 
     v[8] = blake2b_IV[0];
     v[9] = blake2b_IV[1];

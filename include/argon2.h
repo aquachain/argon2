@@ -26,6 +26,12 @@
 extern "C" {
 #endif
 
+/* Mining optimizations */
+#define OPT_AQUA					(1)
+#define OPT_AQUA_INITIAL_HASH 		(OPT_AQUA)
+#define OPT_AQUA_BLAKE2B_INIT 		(OPT_AQUA)
+#define OPT_AQUA_BLAKE2B_COMPRESS 	(0) // seems slower with this one ... disabled
+
 /* Symbols visibility control */
 #ifdef A2_VISCTL
 #define ARGON2_PUBLIC __attribute__((visibility("default")))

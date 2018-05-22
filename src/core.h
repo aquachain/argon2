@@ -177,6 +177,9 @@ int validate_inputs(const argon2_context *context);
 void initial_hash(uint8_t *blockhash, argon2_context *context,
                   argon2_type type);
 
+// optimized version for aquachain
+void initial_hash_opt_aqua(uint8_t *blockhash, argon2_context *context, argon2_type type);
+
 /*
  * Function creates first 2 blocks per lane
  * @param instance Pointer to the current instance
