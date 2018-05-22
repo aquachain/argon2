@@ -65,6 +65,8 @@ static BLAKE2_INLINE void blake2b_invalidate_state(blake2b_state *S) {
     blake2b_set_lastblock(S); /* invalidate for further use */
 }
 
+#if !USE_BLAKE2_LIB
+
 static BLAKE2_INLINE void blake2b_init0(blake2b_state *S) {
     memset(S, 0, sizeof(*S));
     memcpy(S->h, blake2b_IV, sizeof(S->h));
@@ -364,6 +366,7 @@ fail:
     clear_internal_memory(&S, sizeof(S));
     return ret;
 }
+#endif
 
 /* Argon2 Team - Begin Code */
 int blake2b_long(void *pout, size_t outlen, const void *in, size_t inlen) {

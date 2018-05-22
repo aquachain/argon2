@@ -27,7 +27,13 @@ extern "C" {
 #endif
 
 /* Mining optimizations */
+#define USE_BLAKE2_LIB				(1)
+#if USE_BLAKE2_LIB
+#define OPT_AQUA					(0)
+#else
 #define OPT_AQUA					(1)
+#endif
+
 #define OPT_AQUA_INITIAL_HASH 		(OPT_AQUA)
 #define OPT_AQUA_BLAKE2B_INIT 		(OPT_AQUA)
 #define OPT_AQUA_BLAKE2B_COMPRESS 	(0) // seems slower with this one ... disabled
