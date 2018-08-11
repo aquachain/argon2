@@ -254,6 +254,10 @@ void fill_segment(const argon2_instance_t *instance,
         ref_block =
             instance->memory + instance->lane_length * ref_lane + ref_index;
         curr_block = instance->memory + curr_offset;
-		fill_block(state, ref_block, curr_block, 0);
+        if(0 == position.pass) {
+            fill_block(state, ref_block, curr_block, 0);
+        } else {
+            fill_block(state, ref_block, curr_block, 1);
+        }
     }
 }
