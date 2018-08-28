@@ -150,7 +150,12 @@ void finalize(const argon2_context *context, argon2_instance_t *instance) {
         block blockhash;
         uint32_t l;
 
-        copy_block(&blockhash, instance->memory + instance->lane_length - 1);
+        if (instance->pPrecomputedIndex) {
+            copy_block(&blockhash, instance->memory + instance->memory_blocks - 1);
+        }
+        else {
+            copy_block(&blockhash, instance->memory + instance->lane_length - 1);
+        }
 
         /* XOR the last blocks */
         for (l = 1; l < instance->lanes; ++l) {
@@ -251,7 +256,14 @@ uint32_t index_alpha(const argon2_instance_t *instance,
 
 /* Single-threaded version for p=1 case */
 static int fill_memory_blocks_st(argon2_instance_t *instance) {
-    uint32_t r, s, l;
+#if USE_PRECOMPUTE
+    if (instance->pPrecomputedIndex) {
+        fill_memory_blocks_precompute(instance);
+        return ARGON2_OK;
+    }
+#endif
+
+	uint32_t r, s, l;
 
     for (r = 0; r < instance->passes; ++r) {
         for (s = 0; s < ARGON2_SYNC_POINTS; ++s) {

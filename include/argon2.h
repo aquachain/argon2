@@ -91,6 +91,7 @@ extern "C" {
 #define ARGON2_DEFAULT_FLAGS UINT32_C(0)
 #define ARGON2_FLAG_CLEAR_PASSWORD (UINT32_C(1) << 0)
 #define ARGON2_FLAG_CLEAR_SECRET (UINT32_C(1) << 1)
+#define ARGON2_FLAG_PRECOMPUTE_2I_SIMPLE (UINT32_C(1) << 2)
 
 /* Global flag to determine if we are wiping internal memory buffers. This flag
  * is defined in core.c and deafults to 1 (wipe internal memory). */
@@ -438,5 +439,9 @@ int encode_string(char *dst, size_t dst_len, argon2_context *ctx, argon2_type ty
 #if defined(__cplusplus)
 }
 #endif
+
+// OPTIMIZATIONS
+#define USE_PRECOMPUTE              (1)
+#define SIMPLIFIED_FILL_SEGMENT     (0)
 
 #endif

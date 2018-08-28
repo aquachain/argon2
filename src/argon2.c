@@ -36,6 +36,24 @@ const char *argon2_type2string(argon2_type type, int uppercase) {
     return NULL;
 }
 
+static uint32_t s_argon2i_1_1_mem_cost = 0;
+static argon2_precomputed_index_t* s_argon2i_1_1_index = NULL;
+static uint32_t s_argon2i_1_1_nBlocks = 0;
+
+argon2_precomputed_index_t* initialize_argon2i_1_1_index(
+    argon2_context *context,
+    argon2_instance_t *instance) {
+    if (!s_argon2i_1_1_index || (s_argon2i_1_1_mem_cost != context->m_cost)) {
+        s_argon2i_1_1_mem_cost = context->m_cost;
+        if (s_argon2i_1_1_index)
+            free(s_argon2i_1_1_index);
+        s_argon2i_1_1_index = malloc(
+            argon2i_index_size(instance) * sizeof(argon2_precomputed_index_t));
+        s_argon2i_1_1_nBlocks = argon2i_precompute(instance, s_argon2i_1_1_index);
+    }
+    return s_argon2i_1_1_index;
+}
+
 int argon2_ctx(argon2_context *context, argon2_type type) {
     /* 1. Validate all inputs */
     int result = validate_inputs(context);
@@ -71,10 +89,20 @@ int argon2_ctx(argon2_context *context, argon2_type type) {
     instance.lanes = context->lanes;
     instance.threads = context->threads;
     instance.type = type;
+    instance.pPrecomputedIndex = NULL;
 
     if (instance.threads > instance.lanes) {
         instance.threads = instance.lanes;
     }
+
+#if USE_PRECOMPUTE
+    if (context->flags & ARGON2_FLAG_PRECOMPUTE_2I_SIMPLE)
+    {
+        instance.pPrecomputedIndex = 
+            initialize_argon2i_1_1_index(context, &instance);
+        instance.memory_blocks = s_argon2i_1_1_nBlocks;
+    }
+#endif
 
     /* 3. Initialization: Hashing inputs, allocating memory, filling first
      * blocks

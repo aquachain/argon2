@@ -62,6 +62,12 @@ void copy_block(block *dst, const block *src);
 /* XOR @src onto @dst bytewise */
 void xor_block(block *dst, const block *src);
 
+typedef struct {
+    uint32_t refSlot;
+    uint32_t store;
+    uint32_t storeSlot;
+} argon2_precomputed_index_t;
+
 /*
  * Argon2 instance: memory pointer, number of passes, amount of memory, type,
  * and derived values.
@@ -80,6 +86,7 @@ typedef struct Argon2_instance_t {
     argon2_type type;
     int print_internals; /* whether to print the memory blocks */
     argon2_context *context_ptr; /* points back to original context */
+    const argon2_precomputed_index_t* pPrecomputedIndex;
 } argon2_instance_t;
 
 /*
@@ -216,6 +223,14 @@ void finalize(const argon2_context *context, argon2_instance_t *instance);
  */
 void fill_segment(const argon2_instance_t *instance,
                   argon2_position_t position);
+
+// related to precomputations...
+uint64_t argon2i_index_size(const argon2_instance_t *instance);
+
+uint64_t argon2i_precompute(const argon2_instance_t *instance,
+                            argon2_precomputed_index_t *oIndex);
+
+void fill_memory_blocks_precompute(const argon2_instance_t *instance);
 
 /*
  * Function that fills the entire memory t_cost times based on the first two
