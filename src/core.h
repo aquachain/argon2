@@ -224,14 +224,6 @@ void finalize(const argon2_context *context, argon2_instance_t *instance);
 void fill_segment(const argon2_instance_t *instance,
                   argon2_position_t position);
 
-// related to precomputations...
-uint32_t argon2i_index_size(const argon2_instance_t *instance);
-
-uint32_t argon2i_precompute(const argon2_instance_t *instance,
-                            argon2_precomputed_index_t *oIndex);
-
-void fill_memory_blocks_precompute(const argon2_instance_t *instance);
-
 /*
  * Function that fills the entire memory t_cost times based on the first two
  * blocks in each lane
@@ -239,5 +231,19 @@ void fill_memory_blocks_precompute(const argon2_instance_t *instance);
  * @return ARGON2_OK if successful, @context->state
  */
 int fill_memory_blocks(argon2_instance_t *instance);
+
+/* additions */
+#if defined(__cplusplus)
+extern "C" {
+#endif
+    uint32_t argon2i_index_size(const argon2_instance_t *instance);
+
+    uint32_t argon2i_precompute(const argon2_instance_t *instance,
+        argon2_precomputed_index_t *oIndex);
+#if defined(__cplusplus)
+}
+#endif
+
+void fill_memory_blocks_precompute(const argon2_instance_t *instance);
 
 #endif

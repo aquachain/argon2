@@ -266,6 +266,11 @@ uint32_t argon2i_precompute(
         return 0;
     }
 
+#define LOG_PRECOMPUTE (0)
+#if LOG_PRECOMPUTE
+    printf("-- argon2i_precompute %d,%d,%d\n", instance->lanes, instance->memory_blocks, instance->threads);
+#endif
+
     // first compute normal ref block indices
     uint32_t nIndices = 0;
     for (slice = 0; slice < ARGON2_SYNC_POINTS; slice++) {
@@ -403,7 +408,6 @@ uint32_t argon2i_precompute(
         pIndex->storeSlot = slot;
         pIndex->refSlot = blocksSlots[pIndex->refSlot];
 
-#define LOG_PRECOMPUTE (0)
 #if LOG_PRECOMPUTE
         const uint32_t LOG_RATE = 100000;
         if ((step == (nIndices-1)) || (step % LOG_RATE) == (LOG_RATE - 1)) {
