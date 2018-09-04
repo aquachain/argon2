@@ -254,6 +254,8 @@ uint32_t argon2i_index_size(const argon2_instance_t *instance) {
     return instance->segment_length * ARGON2_SYNC_POINTS - 2;
 }
 
+#define SIMPLE_PRECOMPUTE (0)
+
 uint32_t argon2i_precompute(
     const argon2_instance_t *instance,
     argon2_precomputed_index_t *oIndex) {
@@ -303,8 +305,22 @@ uint32_t argon2i_precompute(
         }
     }
 
+    size_t nBlocks;
+
+#if SIMPLE_PRECOMPUTE
+    nBlocks = instance->segment_length * ARGON2_SYNC_POINTS;
+    if (nBlocks != (nIndices + 2)) {
+        printf("\nfuck it\n");
+    }
+    for (uint32_t i = 2; i < nBlocks; i++) {
+        oIndex[i - 2].store = 1;
+        oIndex[i - 2].storeSlot = i;
+    }
+    return (uint32_t)nBlocks;
+#endif
+
     // find step of last usage for each block
-    size_t nBlocks = instance->segment_length * ARGON2_SYNC_POINTS;
+    nBlocks = instance->segment_length * ARGON2_SYNC_POINTS;
     uint32_t *stepLastUsage = malloc(nBlocks * sizeof(uint32_t));
     memset(stepLastUsage, UCHAR_MAX, nBlocks * sizeof(uint32_t));
     for (int i = nIndices - 1; i >= 0; i--) {
