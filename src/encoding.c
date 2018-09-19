@@ -22,6 +22,8 @@
 #include "encoding.h"
 #include "core.h"
 
+#pragma warning(disable:4996)
+
 /*
  * Example code for a decoder and encoder of "hash strings", with Argon2
  * parameters.
