@@ -77,19 +77,9 @@ static void fill_block_precompute(__m256i *state, const block *ref_block, block 
     __m256i block_XY[ARGON2_HWORDS_IN_BLOCK];
     unsigned int i;
 
-    if (with_xor) {
-        for (i = 0; i < ARGON2_HWORDS_IN_BLOCK; i++) {
-            state[i] = _mm256_xor_si256(
-                state[i], _mm256_loadu_si256((const __m256i *)ref_block->v + i));
-            block_XY[i] = _mm256_xor_si256(
-                state[i], _mm256_loadu_si256((const __m256i *)next_block->v + i));
-        }
-    }
-    else {
-        for (i = 0; i < ARGON2_HWORDS_IN_BLOCK; i++) {
-            block_XY[i] = state[i] = _mm256_xor_si256(
-                state[i], _mm256_loadu_si256((const __m256i *)ref_block->v + i));
-        }
+    for (i = 0; i < ARGON2_HWORDS_IN_BLOCK; i++) {
+        block_XY[i] = state[i] = _mm256_xor_si256(
+            state[i], _mm256_loadu_si256((const __m256i *)ref_block->v + i));
     }
 
     for (i = 0; i < 4; ++i) {
