@@ -348,7 +348,7 @@ uint32_t argon2i_precompute(
 		uint32_t block = 2 + step;
 
         // every nth step do a cleanup of the pool
-        const uint32_t CLEAN_RATE = 1000;
+        const uint32_t CLEAN_RATE = 100;
         if ((step % CLEAN_RATE) == (CLEAN_RATE - 1)) {
             for (uint32_t j = 0; j < blockPoolsize; j++) {
                 uint32_t poolBlock = blockPool[j];

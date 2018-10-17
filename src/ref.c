@@ -56,12 +56,10 @@ static void fill_block(const block *prev_block, const block *ref_block,
        (16,17,..31)... finally (112,113,...127) */
     for (i = 0; i < 8; ++i) {
         BLAKE2_ROUND_NOMSG(
-            blockR.v[16 * i], blockR.v[16 * i + 1], blockR.v[16 * i + 2],
-            blockR.v[16 * i + 3], blockR.v[16 * i + 4], blockR.v[16 * i + 5],
-            blockR.v[16 * i + 6], blockR.v[16 * i + 7], blockR.v[16 * i + 8],
-            blockR.v[16 * i + 9], blockR.v[16 * i + 10], blockR.v[16 * i + 11],
-            blockR.v[16 * i + 12], blockR.v[16 * i + 13], blockR.v[16 * i + 14],
-            blockR.v[16 * i + 15]);
+            blockR.v[16 * i],       blockR.v[16 * i + 1],   blockR.v[16 * i + 2],     blockR.v[16 * i + 3], 
+            blockR.v[16 * i + 4],   blockR.v[16 * i + 5],   blockR.v[16 * i + 6],     blockR.v[16 * i + 7], 
+            blockR.v[16 * i + 8],   blockR.v[16 * i + 9],   blockR.v[16 * i + 10],    blockR.v[16 * i + 11],
+            blockR.v[16 * i + 12],  blockR.v[16 * i + 13],  blockR.v[16 * i + 14],    blockR.v[16 * i + 15]);
     }
 
     /* Apply Blake2 on rows of 64-bit words: (0,1,16,17,...112,113), then
