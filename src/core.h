@@ -64,7 +64,6 @@ void xor_block(block *dst, const block *src);
 
 typedef struct {
     uint32_t refSlot;
-    uint32_t store;
     uint32_t storeSlot;
 } argon2_precomputed_index_t;
 

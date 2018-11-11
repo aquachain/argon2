@@ -303,7 +303,6 @@ uint32_t argon2i_precompute(
         printf("\nfuck it\n");
     }
     for (uint32_t i = 2; i < nBlocks; i++) {
-        oIndex[i - 2].store = 1;
         oIndex[i - 2].storeSlot = i;
     }
     return (uint32_t)nBlocks;
@@ -410,8 +409,7 @@ uint32_t argon2i_precompute(
 #endif
 
         // write final indexing values
-        pIndex->store = store;
-        pIndex->storeSlot = slot;
+        pIndex->storeSlot = store ? slot : UINT32_MAX;
         pIndex->refSlot = blocksSlots[pIndex->refSlot];
 
 #if LOG_PRECOMPUTE
@@ -456,7 +454,7 @@ void fill_memory_blocks_precompute(const argon2_instance_t *instance) {
     for (uint32_t i = starting_index; i < nSteps; ++i) {
         block *ref_block = instance->memory + pIndex->refSlot;
         block *curr_block = instance->memory + pIndex->storeSlot;
-        if (!pIndex->store)
+        if (pIndex->storeSlot == UINT32_MAX)
             curr_block = NULL;
         fill_block_precompute(state, ref_block, curr_block);
         pIndex++;
